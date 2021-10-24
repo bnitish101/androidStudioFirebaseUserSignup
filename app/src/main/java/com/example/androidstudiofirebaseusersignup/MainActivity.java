@@ -1,11 +1,14 @@
 package com.example.androidstudiofirebaseusersignup;
 
+import androidx.activity.result.ActivityResultCallback;
 import androidx.activity.result.ActivityResultLauncher;
+import androidx.activity.result.contract.ActivityResultContracts;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.appcompat.app.AppCompatActivity;
 
 import android.Manifest;
+import android.app.ProgressDialog;
 import android.content.Intent;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
@@ -15,8 +18,11 @@ import android.view.View;
 import android.widget.Button;
 import android.widget.EditText;
 import android.widget.ImageView;
+import android.widget.ProgressBar;
+import android.widget.Toast;
 
 import com.google.android.gms.tasks.OnSuccessListener;
+import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.FirebaseDatabase;
 import com.google.firebase.storage.FirebaseStorage;
 import com.google.firebase.storage.OnProgressListener;
@@ -56,6 +62,12 @@ public class MainActivity extends AppCompatActivity {
         btnBrowse = (Button) findViewById(R.id.btnBrowse);
         btnSignup = (Button) findViewById(R.id.btnSignup);
 
+        mGetContent = registerForActivityResult(new ActivityResultContracts.GetContent(), new ActivityResultCallback<Uri>() {
+            @Override
+            public void onActivityResult(Uri result) {
+                ivBrowse.setImageURI(result);
+            }
+        });
         btnBrowse.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
@@ -93,7 +105,9 @@ public class MainActivity extends AppCompatActivity {
 
     @Override
     protected void onActivityResult(int requestCode, int resultCode, @Nullable Intent data) {
-        if (requestCode == RESULT_OK){
+        super.onActivityResult(requestCode, resultCode, data);
+
+        if (resultCode == RESULT_OK){
             filePath =data.getData();
             try {
                 InputStream inputStream =getContentResolver().openInputStream(filePath);
@@ -108,6 +122,10 @@ public class MainActivity extends AppCompatActivity {
 
     private void saveSignupData() {
 
+        ProgressDialog progressDialog = new ProgressDialog(this);
+        progressDialog.setTitle("File Uploader");
+        progressDialog.show();
+
         etRollNo = (EditText) findViewById(R.id.etRollNo);
         etName = (EditText) findViewById(R.id.etName);
         etCourse = (EditText) findViewById(R.id.etCourse);
@@ -120,13 +138,33 @@ public class MainActivity extends AppCompatActivity {
                 .addOnSuccessListener(new OnSuccessListener<UploadTask.TaskSnapshot>() {
                     @Override
                     public void onSuccess(UploadTask.TaskSnapshot taskSnapshot) {
+                        uploader.getDownloadUrl().addOnSuccessListener(new OnSuccessListener<Uri>() {
+                            @Override
+                            public void onSuccess(Uri uri) {
+                                FirebaseDatabase firebaseDatabase = FirebaseDatabase.getInstance();
+                                DatabaseReference root = firebaseDatabase.getReference("users");
 
+                                dataHolder obj = new dataHolder(etName.getText().toString(), etCourse.getText().toString(), etMobile.getText().toString(), uri.toString());
+                                root.child(etRollNo.getText().toString()).setValue(obj);
+
+                                etRollNo.setText("");
+                                etName.setText("");
+                                etCourse.setText("");
+                                etMobile.setText("");
+                                ivBrowse.setImageResource(R.drawable.ic_launcher_background);
+
+                                progressDialog.dismiss();
+                                Toast.makeText(getApplicationContext(),"Uploaded", Toast.LENGTH_LONG).show();
+
+                            }
+                        });
                     }
                 })
                 .addOnProgressListener(new OnProgressListener<UploadTask.TaskSnapshot>() {
                     @Override
                     public void onProgress(@NonNull UploadTask.TaskSnapshot snapshot) {
-
+                        float percent = (100 * snapshot.getBytesTransferred()) / snapshot.getTotalByteCount();
+                        progressDialog.setMessage("Uploaded: "+ (int)percent+" %");
                     }
                 });
 

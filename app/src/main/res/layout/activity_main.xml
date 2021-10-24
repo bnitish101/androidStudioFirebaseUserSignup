@@ -17,7 +17,7 @@
 
         <ImageView
             android:id="@+id/ivBrowse"
-            android:layout_width="300dp"
+            android:layout_width="212dp"
             android:layout_height="200dp"
             app:srcCompat="@drawable/ic_launcher_background" />
 
