@@ -1,6 +1,7 @@
 package com.example.androidstudiofirebaseusersignup;
 
 import androidx.activity.result.ActivityResultLauncher;
+import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.appcompat.app.AppCompatActivity;
 
@@ -15,6 +16,12 @@ import android.widget.Button;
 import android.widget.EditText;
 import android.widget.ImageView;
 
+import com.google.android.gms.tasks.OnSuccessListener;
+import com.google.firebase.database.FirebaseDatabase;
+import com.google.firebase.storage.FirebaseStorage;
+import com.google.firebase.storage.OnProgressListener;
+import com.google.firebase.storage.StorageReference;
+import com.google.firebase.storage.UploadTask;
 import com.karumi.dexter.Dexter;
 import com.karumi.dexter.PermissionToken;
 import com.karumi.dexter.listener.PermissionDeniedResponse;
@@ -23,6 +30,7 @@ import com.karumi.dexter.listener.PermissionRequest;
 import com.karumi.dexter.listener.single.PermissionListener;
 
 import java.io.InputStream;
+import java.util.Random;
 
 public class MainActivity extends AppCompatActivity {
 
@@ -104,6 +112,25 @@ public class MainActivity extends AppCompatActivity {
         etName = (EditText) findViewById(R.id.etName);
         etCourse = (EditText) findViewById(R.id.etCourse);
         etMobile = (EditText) findViewById(R.id.etMobile);
+
+        FirebaseStorage storage = FirebaseStorage.getInstance();
+        StorageReference uploader = storage.getReference("image1"+new Random().nextInt(50));
+
+        uploader.putFile(filePath)
+                .addOnSuccessListener(new OnSuccessListener<UploadTask.TaskSnapshot>() {
+                    @Override
+                    public void onSuccess(UploadTask.TaskSnapshot taskSnapshot) {
+
+                    }
+                })
+                .addOnProgressListener(new OnProgressListener<UploadTask.TaskSnapshot>() {
+                    @Override
+                    public void onProgress(@NonNull UploadTask.TaskSnapshot snapshot) {
+
+                    }
+                });
+
+
 
     }
 }
